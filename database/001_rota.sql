@@ -1,0 +1,103 @@
+-- Run once in the SQL editor of a dedicated Supabase project.
+-- No real volunteer data is seeded. All writes go through authorised RPCs.
+begin;
+create table public.rota_members (
+ user_id uuid primary key references auth.users(id) on delete cascade,
+ name text not null check (length(trim(name)) between 1 and 80),
+ coordinator boolean not null default false,
+ trusted boolean not null default false
+);
+create table public.rota_shifts (
+ id uuid primary key default gen_random_uuid(),
+ role text not null check(length(trim(role)) between 1 and 80),
+ day date not null, start time not null, "end" time not null,
+ capacity integer not null check(capacity between 1 and 30),
+ cancelled boolean not null default false,
+ created_by uuid not null references auth.users(id),
+ check("end">start)
+);
+create table public.rota_requests (
+ shift_id uuid references public.rota_shifts(id) on delete cascade,
+ user_id uuid references public.rota_members(user_id) on delete cascade,
+ status text not null check(status in ('pending','confirmed','withdrawn','declined','cancelled')),
+ updated_at timestamptz not null default now(),
+ primary key(shift_id,user_id)
+);
+create index rota_shifts_day on public.rota_shifts(day);
+create index rota_requests_user on public.rota_requests(user_id);
+alter table public.rota_members enable row level security;
+alter table public.rota_shifts enable row level security;
+alter table public.rota_requests enable row level security;
+revoke all on public.rota_members,public.rota_shifts,public.rota_requests from anon,authenticated;
+
+create function public.rota_enrol(p_name text) returns void
+language plpgsql security definer set search_path='' as $$
+begin
+ if auth.uid() is null or coalesce(auth.jwt()->>'email','')='' then raise exception 'Sign in with your email first.'; end if;
+ if length(trim(p_name)) not between 1 and 80 then raise exception 'Enter your name (up to 80 characters).'; end if;
+ insert into public.rota_members(user_id,name) values(auth.uid(),trim(p_name))
+ on conflict(user_id) do update set name=excluded.name;
+end $$;
+
+create function public.rota_snapshot() returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare me public.rota_members;
+begin
+ if auth.uid() is null then raise exception 'Sign in first.'; end if;
+ select * into me from public.rota_members where user_id=auth.uid();
+ if me.user_id is null then return jsonb_build_object('me',null,'shifts','[]'::jsonb,'requests','[]'::jsonb); end if;
+ return jsonb_build_object(
+ 'me',jsonb_build_object('id',me.user_id,'name',me.name,'coordinator',me.coordinator,'trusted',me.trusted),
+ 'shifts',coalesce((select jsonb_agg(jsonb_build_object('id',s.id,'role',s.role,'day',s.day,'start',to_char(s.start,'HH24:MI'),'end',to_char(s."end",'HH24:MI'),'capacity',s.capacity,'cancelled',s.cancelled,'filled',(select count(*) from public.rota_requests r where r.shift_id=s.id and r.status='confirmed')) order by s.day,s.start) from public.rota_shifts s where s.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb),
+ 'requests',coalesce((select jsonb_agg(jsonb_build_object('shift_id',r.shift_id,'user_id',r.user_id,'status',r.status,'name',m.name)) from public.rota_requests r join public.rota_members m on m.user_id=r.user_id join public.rota_shifts s on s.id=r.shift_id where (me.coordinator or r.user_id=me.user_id) and s.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb));
+end $$;
+
+create function public.rota_action(p_op text,p_args jsonb) returns void
+language plpgsql security definer set search_path='' as $$
+declare me public.rota_members; s public.rota_shifts; target uuid; current_status text; places integer; d date; t time; e time; c integer;
+begin
+ if auth.uid() is null then raise exception 'Sign in first.'; end if;
+ select * into me from public.rota_members where user_id=auth.uid();
+ if me.user_id is null then raise exception 'Add your name first.'; end if;
+ if p_op='create' then
+  if not me.coordinator then raise exception 'Coordinator access required.'; end if;
+  d=(p_args->>'day')::date;t=(p_args->>'start')::time;e=(p_args->>'end')::time;c=(p_args->>'capacity')::integer;
+  if d is null or d<(now() at time zone 'Europe/London')::date or t is null or e is null or e<=t or c is null or c not between 1 and 30 or length(trim(coalesce(p_args->>'role',''))) not between 1 and 80 then raise exception 'Check the role, date, times and number of places.'; end if;
+  insert into public.rota_shifts(role,day,start,"end",capacity,created_by) values(trim(p_args->>'role'),d,t,e,c,me.user_id);
+  return;
+ end if;
+ -- All operations on a shift lock the same row: simultaneous approvals cannot overbook.
+ select * into s from public.rota_shifts where id=(p_args->>'shift_id')::uuid for update;
+ if s.id is null then raise exception 'Shift not found.'; end if;
+ if p_op='close' then
+  if not me.coordinator then raise exception 'Coordinator access required.'; end if;
+  update public.rota_shifts set cancelled=true where id=s.id;
+  update public.rota_requests set status='cancelled',updated_at=now() where shift_id=s.id;
+  return;
+ end if;
+ if s.cancelled then raise exception 'This shift has been cancelled.'; end if;
+ if (s.day+s."end") <= (now() at time zone 'Europe/London') then raise exception 'This shift has finished.'; end if;
+ target=me.user_id;
+ if p_op in ('approve','decline') then
+  if not me.coordinator then raise exception 'Coordinator access required.'; end if;
+  target=(p_args->>'user_id')::uuid;
+ end if;
+ select status into current_status from public.rota_requests where shift_id=s.id and user_id=target;
+ select count(*) into places from public.rota_requests where shift_id=s.id and status='confirmed';
+ if p_op='request' then
+  if current_status in ('pending','confirmed') then return; end if;
+  if places>=s.capacity then raise exception 'This shift has just filled. Choose another shift.'; end if;
+  insert into public.rota_requests(shift_id,user_id,status) values(s.id,me.user_id,case when me.trusted then 'confirmed' else 'pending' end)
+  on conflict(shift_id,user_id) do update set status=excluded.status,updated_at=now();
+ elsif p_op='withdraw' then
+  update public.rota_requests set status='withdrawn',updated_at=now() where shift_id=s.id and user_id=me.user_id;
+ elsif p_op in ('approve','decline') then
+  if current_status is distinct from 'pending' then raise exception 'This request is no longer awaiting approval.'; end if;
+  if p_op='approve' and places>=s.capacity then raise exception 'This shift is full.'; end if;
+  update public.rota_requests set status=case when p_op='approve' then 'confirmed' else 'declined' end,updated_at=now() where shift_id=s.id and user_id=target;
+ else raise exception 'Unknown action.';
+ end if;
+end $$;
+revoke all on function public.rota_enrol(text),public.rota_snapshot(),public.rota_action(text,jsonb) from public,anon;
+grant execute on function public.rota_enrol(text),public.rota_snapshot(),public.rota_action(text,jsonb) to authenticated;
+commit;

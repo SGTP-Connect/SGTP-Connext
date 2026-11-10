@@ -7,12 +7,28 @@ create table public.rota_members (
  coordinator boolean not null default false,
  trusted boolean not null default false
 );
+create table public.rota_fixtures (
+ id uuid primary key default gen_random_uuid(),
+ team text not null check(team in ('Men’s First Team','Men’s Development Team')),
+ opponent text not null check(length(trim(opponent)) between 1 and 100),
+ day date not null,
+ side text not null check(side in ('Home','Away')),
+ status text not null check(status in ('Scheduled','Postponed','Cancelled')),
+ updated_at timestamptz not null default now()
+);
+alter table public.rota_fixtures enable row level security;
+revoke all on public.rota_fixtures from anon,authenticated;
 create table public.rota_shifts (
  id uuid primary key default gen_random_uuid(),
  role text not null check(length(trim(role)) between 1 and 80),
  day date not null, start time not null, "end" time not null,
  capacity integer not null check(capacity between 1 and 30),
  cancelled boolean not null default false,
+ kind text,
+ staffing text not null default 'minimum' check(staffing in ('ideal','minimum')),
+ conditional boolean not null default false,
+ fixture_active boolean not null default true,
+ unique(day,kind),
  created_by uuid not null references auth.users(id),
  check("end">start)
 );
@@ -39,6 +55,35 @@ begin
  on conflict(user_id) do update set name=excluded.name;
 end $$;
 
+-- Called only from coordinator RPCs. Fixed six-week window, idempotent by day/kind.
+create function public.rota_sync_schedule() returns void
+language plpgsql security definer set search_path='' as $$
+declare sat date; d date; base date; t record; active boolean;
+begin
+ if not exists(select 1 from public.rota_members where user_id=auth.uid() and coordinator) then raise exception 'Coordinator access required.'; end if;
+ perform pg_advisory_xact_lock(735710);
+ base=(now() at time zone 'Europe/London')::date;
+ base=base+case when extract(isodow from base)=7 then -1 else 6-extract(isodow from base)::integer end;
+ for i in 0..5 loop
+  sat=base+7*i;
+  for t in select * from (values
+   ('saturday-kitchen-am','Kitchen · Saturday morning','09:00'::time,'13:00'::time,2,'ideal',false,0),
+   ('saturday-kitchen-pm','Kitchen · Saturday afternoon','14:00'::time,'18:00'::time,2,'minimum',true,0),
+   ('saturday-bar-pm','Bar · Saturday afternoon','14:00'::time,'18:00'::time,1,'minimum',true,0),
+   ('sunday-kitchen-am','Kitchen · Sunday morning','09:00'::time,'13:00'::time,2,'minimum',false,1)
+  ) as x(kind,role,start,finish,capacity,staffing,conditional,offset_days) loop
+   d=sat+t.offset_days;
+   active=not t.conditional or exists(select 1 from public.rota_fixtures f where f.day=d and f.side='Home' and f.status='Scheduled');
+   insert into public.rota_shifts(role,day,start,"end",capacity,created_by,kind,staffing,conditional,fixture_active)
+   values(t.role,d,t.start,t.finish,t.capacity,auth.uid(),t.kind,t.staffing,t.conditional,active)
+   on conflict(day,kind) do update set fixture_active=excluded.fixture_active;
+  end loop;
+ end loop;
+ update public.rota_requests r set status='cancelled',updated_at=now()
+ from public.rota_shifts s where s.id=r.shift_id and not s.fixture_active and r.status in ('pending','confirmed');
+end $$;
+revoke all on function public.rota_sync_schedule() from public,anon,authenticated;
+
 create function public.rota_snapshot() returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare me public.rota_members;
@@ -46,9 +91,11 @@ begin
  if auth.uid() is null then raise exception 'Sign in first.'; end if;
  select * into me from public.rota_members where user_id=auth.uid();
  if me.user_id is null then return jsonb_build_object('me',null,'shifts','[]'::jsonb,'requests','[]'::jsonb); end if;
+ if me.coordinator then perform public.rota_sync_schedule(); end if;
  return jsonb_build_object(
+ 'fixtures',coalesce((select jsonb_agg(to_jsonb(f) order by f.day) from public.rota_fixtures f where f.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb),
  'me',jsonb_build_object('id',me.user_id,'name',me.name,'coordinator',me.coordinator,'trusted',me.trusted),
- 'shifts',coalesce((select jsonb_agg(jsonb_build_object('id',s.id,'role',s.role,'day',s.day,'start',to_char(s.start,'HH24:MI'),'end',to_char(s."end",'HH24:MI'),'capacity',s.capacity,'cancelled',s.cancelled,'filled',(select count(*) from public.rota_requests r where r.shift_id=s.id and r.status='confirmed')) order by s.day,s.start) from public.rota_shifts s where s.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb),
+ 'shifts',coalesce((select jsonb_agg(jsonb_build_object('id',s.id,'role',s.role,'day',s.day,'start',to_char(s.start,'HH24:MI'),'end',to_char(s."end",'HH24:MI'),'capacity',s.capacity,'cancelled',s.cancelled or not s.fixture_active,'kind',s.kind,'staffing',s.staffing,'conditional',s.conditional,'fixture_active',s.fixture_active,'filled',(select count(*) from public.rota_requests r where r.shift_id=s.id and r.status='confirmed')) order by s.day,s.start) from public.rota_shifts s where s.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb),
  'requests',coalesce((select jsonb_agg(jsonb_build_object('shift_id',r.shift_id,'user_id',r.user_id,'status',r.status,'name',m.name)) from public.rota_requests r join public.rota_members m on m.user_id=r.user_id join public.rota_shifts s on s.id=r.shift_id where (me.coordinator or r.user_id=me.user_id) and s.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb));
 end $$;
 
@@ -59,6 +106,18 @@ begin
  if auth.uid() is null then raise exception 'Sign in first.'; end if;
  select * into me from public.rota_members where user_id=auth.uid();
  if me.user_id is null then raise exception 'Add your name first.'; end if;
+ if p_op='fixture' then
+  if not me.coordinator then raise exception 'Coordinator access required.'; end if;
+  perform pg_advisory_xact_lock(735710);
+  if nullif(p_args->>'fixture_id','') is not null then
+   update public.rota_fixtures set team=p_args->>'team',opponent=trim(p_args->>'opponent'),day=(p_args->>'day')::date,side=p_args->>'side',status=p_args->>'status',updated_at=now() where id=(p_args->>'fixture_id')::uuid;
+   if not found then raise exception 'Fixture not found.'; end if;
+  else
+   insert into public.rota_fixtures(team,opponent,day,side,status) values(p_args->>'team',trim(p_args->>'opponent'),(p_args->>'day')::date,p_args->>'side',p_args->>'status');
+  end if;
+  perform public.rota_sync_schedule();
+  return;
+ end if;
  if p_op='create' then
   if not me.coordinator then raise exception 'Coordinator access required.'; end if;
   d=(p_args->>'day')::date;t=(p_args->>'start')::time;e=(p_args->>'end')::time;c=(p_args->>'capacity')::integer;
@@ -75,7 +134,7 @@ begin
   update public.rota_requests set status='cancelled',updated_at=now() where shift_id=s.id;
   return;
  end if;
- if s.cancelled then raise exception 'This shift has been cancelled.'; end if;
+ if s.cancelled or not s.fixture_active then raise exception 'This shift has been cancelled.'; end if;
  if (s.day+s."end") <= (now() at time zone 'Europe/London') then raise exception 'This shift has finished.'; end if;
  target=me.user_id;
  if p_op in ('approve','decline') then

@@ -8,7 +8,7 @@ The existing Netlify production deploy is unchanged. This branch adds `/rota/` a
 - New volunteers request a shift; coordinators approve or decline.
 - Trusted returning volunteers can confirm immediately; trust is assigned in the database, never by a typed name or a client-side role selector.
 - Create shifts, withdraw places and cancel a whole shift.
-- Email-code authentication adapter and shared database RPCs.
+- Email-link authentication adapter and shared database RPCs.
 - Database authorisation, private volunteer names, unique requests, and per-shift row locking to prevent overbooking.
 
 ## Club shift rules
@@ -28,20 +28,20 @@ There is **no live FA sync** and no connection to the older app's fictional brow
 
 ## Required before real use
 
-No Supabase project has been created or connected. Sign-in and real shared bookings are intentionally disabled in `rota/config.js`. Do not advertise this as a live booking system yet.
+The club Supabase project is connected in the preview. Ben ran the initial SQL successfully and received a confirmation email. Authenticated sign-in and shared booking tests remain outstanding; do not advertise this as a live booking system yet.
 
 1. Create a club-owned Supabase project (choose the region and review the service terms/pricing in the club's account).
 2. Run the current `database/001_rota.sql` once in its SQL editor. This creates only rota tables and RPCs; it seeds no people or shifts.
-3. Enable email authentication and configure production SMTP. Configure **both** the signup confirmation and magic-link email templates to include `{{ .Token }}` as the sign-in code. The app uses codes, not email links. Check delivery, expiry and rate limits before inviting volunteers.
+3. Enable email authentication and configure production SMTP. The app accepts default signup confirmation and magic-link emails. Allow the exact production and preview `/rota/` URLs in Authentication URL Configuration. Each email request specifies the current rota URL, and callbacks validate the access token with Supabase before opening a session. Tokens are removed from the address bar and retained in memory only. Check delivery, expiry and rate limits before inviting volunteers.
 4. Put the HTTPS project URL and **public publishable key** in `rota/config.js`. Never put service-role keys, passwords or SMTP credentials in this repository.
 5. Sign in as the intended coordinator and enter their name. In the SQL editor, identify that exact account in `auth.users` and set `rota_members.coordinator=true` for its UUID. Do not use client-editable user metadata for permissions. Set `trusted=true` only for club-approved returning volunteers. Names alone must not determine trust.
-6. Check on two separate devices: request, refresh, approve, refresh, withdraw; check that another volunteer cannot see names or approve requests. Exercise concurrent final-place approvals against the hosted database. Check expired and incorrect codes, refresh-token renewal, unavailable network and sign-out.
+6. Check on two separate devices: request, refresh, approve, refresh, withdraw; check that another volunteer cannot see names or approve requests. Exercise concurrent final-place approvals against the hosted database. Check expired and invalid links, refresh-token renewal, unavailable network and sign-out.
 7. Review privacy text, club contact arrangements and the database retention process before collecting names. This feature stores only account identity, display name and booking state. It does not accept child registration, medical data or welfare reports.
 8. Review the branch and approve publication. Keep Netlify auto-publishing locked; merge/deploy only under the agreed approval process. When manually publishing, select the reviewed commit and leave the lock in place.
 
 ## Limitations
 
-- Live email delivery and multi-device integration have not been tested because the service is not configured.
+- Email delivery to the owner was observed. End-to-end sign-in and multi-device integration are not yet verified. Default Supabase email delivery is restricted to organisation members; configure SMTP before inviting volunteers.
 - Sessions are in memory only: reload/close signs the user out locally. Sign-out attempts server revocation too; if offline, the local session is still cleared and the existing token expires normally.
 - Refresh retrieves new shared state; no background realtime subscription.
 - No booking notification emails. Volunteers check My shifts; coordinators must communicate same-day changes directly.

@@ -9,3 +9,5 @@ header select{margin-right:0}
 
 header .brand img{object-fit:fill;clip-path:polygon(50% 0%,74% 6%,94% 15%,95% 35%,91% 57%,81% 77%,66% 93%,50% 100%,34% 93%,19% 77%,9% 57%,5% 35%,6% 15%,26% 6%);height:70px;width:70px}
 @media(max-width:600px){header .brand img{height:61px;width:61px}}
+
+header:after{display:none}

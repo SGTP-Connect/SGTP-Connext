@@ -1,0 +1,11 @@
+/* Shared club identity: the full crest and visible diagonal club colours. */
+header{position:relative;overflow:hidden;background:linear-gradient(120deg,#102f60,#185894);border-bottom:4px solid #c52c43;min-height:110px;padding-right:max(112px,calc((100vw - 1040px)/2))}
+header:after{content:"";position:absolute;right:-24px;top:0;width:120px;height:100%;background:linear-gradient(112deg,transparent 0 20%,#f5f9ff 20% 30%,transparent 30% 38%,#d3344c 38% 50%,transparent 50% 58%,#85b6e9 58% 74%,transparent 74%);opacity:1;pointer-events:none}
+header>*{position:relative;z-index:1}
+header .brand{min-width:0;gap:12px}
+header .brand img{display:block;width:70px;height:80px;min-width:70px;object-fit:contain;object-position:center;flex-shrink:0;border:0;border-radius:0;filter:drop-shadow(0 2px 3px #001c3d33)}
+header select{margin-right:0}
+@media(max-width:600px){header{padding:14px 80px 14px 14px;gap:10px;flex-wrap:wrap;min-height:112px}header:after{width:95px;right:-20px}header .brand{flex:1 1 100%;font-size:20px}header .brand img{width:61px;height:70px;min-width:61px}header .brand h1{font-size:20px;white-space:normal}header .brand small{font-size:10px;letter-spacing:.4px}header select{margin-left:73px;max-width:160px}header .back{margin-left:73px;font-size:13px}}
+
+header .brand img{object-fit:fill;clip-path:polygon(50% 0%,74% 6%,94% 15%,95% 35%,91% 57%,81% 77%,66% 93%,50% 100%,34% 93%,19% 77%,9% 57%,5% 35%,6% 15%,26% 6%);height:70px;width:70px}
+@media(max-width:600px){header .brand img{height:61px;width:61px}}

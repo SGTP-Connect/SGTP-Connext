@@ -36,6 +36,8 @@ create table public.rota_requests (
  shift_id uuid references public.rota_shifts(id) on delete cascade,
  user_id uuid references public.rota_members(user_id) on delete cascade,
  status text not null check(status in ('pending','confirmed','withdrawn','declined','cancelled')),
+ expenses text not null check(expenses in ('claim','waive')),
+ age_confirmed boolean not null default false,
  updated_at timestamptz not null default now(),
  primary key(shift_id,user_id)
 );
@@ -96,7 +98,7 @@ begin
  'fixtures',coalesce((select jsonb_agg(to_jsonb(f) order by f.day) from public.rota_fixtures f where f.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb),
  'me',jsonb_build_object('id',me.user_id,'name',me.name,'coordinator',me.coordinator,'trusted',me.trusted),
  'shifts',coalesce((select jsonb_agg(jsonb_build_object('id',s.id,'role',s.role,'day',s.day,'start',to_char(s.start,'HH24:MI'),'end',to_char(s."end",'HH24:MI'),'capacity',s.capacity,'cancelled',s.cancelled or not s.fixture_active,'kind',s.kind,'staffing',s.staffing,'conditional',s.conditional,'fixture_active',s.fixture_active,'filled',(select count(*) from public.rota_requests r where r.shift_id=s.id and r.status='confirmed')) order by s.day,s.start) from public.rota_shifts s where s.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb),
- 'requests',coalesce((select jsonb_agg(jsonb_build_object('shift_id',r.shift_id,'user_id',r.user_id,'status',r.status,'name',m.name)) from public.rota_requests r join public.rota_members m on m.user_id=r.user_id join public.rota_shifts s on s.id=r.shift_id where (me.coordinator or r.user_id=me.user_id) and s.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb));
+ 'requests',coalesce((select jsonb_agg(jsonb_build_object('shift_id',r.shift_id,'user_id',r.user_id,'status',r.status,'name',m.name,'expenses',r.expenses,'age_confirmed',r.age_confirmed)) from public.rota_requests r join public.rota_members m on m.user_id=r.user_id join public.rota_shifts s on s.id=r.shift_id where (me.coordinator or r.user_id=me.user_id) and s.day >= (now() at time zone 'Europe/London')::date),'[]'::jsonb));
 end $$;
 
 create function public.rota_action(p_op text,p_args jsonb) returns void
@@ -146,12 +148,15 @@ begin
  if p_op='request' then
   if current_status in ('pending','confirmed') then return; end if;
   if places>=s.capacity then raise exception 'This shift has just filled. Choose another shift.'; end if;
-  insert into public.rota_requests(shift_id,user_id,status) values(s.id,me.user_id,case when me.trusted then 'confirmed' else 'pending' end)
-  on conflict(shift_id,user_id) do update set status=excluded.status,updated_at=now();
+  if coalesce(p_args->>'expenses','') not in ('claim','waive') then raise exception 'Choose your expenses preference.'; end if;
+  if (s.kind='saturday-bar-pm' or s.role ilike '%bar%') and (p_args->'age_confirmed') is distinct from 'true'::jsonb then raise exception 'Bar volunteers must confirm they are 18 or over.'; end if;
+  insert into public.rota_requests(shift_id,user_id,status,expenses,age_confirmed) values(s.id,me.user_id,case when me.trusted and not (coalesce(s.kind,'')='saturday-bar-pm' or s.role ilike '%bar%') then 'confirmed' else 'pending' end,p_args->>'expenses',coalesce((p_args->'age_confirmed')='true'::jsonb,false))
+  on conflict(shift_id,user_id) do update set status=excluded.status,expenses=excluded.expenses,age_confirmed=excluded.age_confirmed,updated_at=now();
  elsif p_op='withdraw' then
   update public.rota_requests set status='withdrawn',updated_at=now() where shift_id=s.id and user_id=me.user_id;
  elsif p_op in ('approve','decline') then
   if current_status is distinct from 'pending' then raise exception 'This request is no longer awaiting approval.'; end if;
+  if p_op='approve' and (s.kind='saturday-bar-pm' or s.role ilike '%bar%') and ((p_args->'age_verified') is distinct from 'true'::jsonb or not exists(select 1 from public.rota_requests where shift_id=s.id and user_id=target and age_confirmed)) then raise exception 'Confirm the bar volunteer is 18 or over before approval.'; end if;
   if p_op='approve' and places>=s.capacity then raise exception 'This shift is full.'; end if;
   update public.rota_requests set status=case when p_op='approve' then 'confirmed' else 'declined' end,updated_at=now() where shift_id=s.id and user_id=target;
  else raise exception 'Unknown action.';

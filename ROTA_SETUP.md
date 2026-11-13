@@ -56,3 +56,9 @@ Run `npm install` then `npm test`. PGlite tests execute the migration and RPCs i
 Browser QA exercised the setup-disabled state, demo request, coordinator approval and volunteer confirmation. JavaScript syntax checks passed. Production remains untouched.
 
 Fixture update verification: 12 tests pass, including regular timings, either senior team at home, away/postponed games, cancellation of booked afternoon shifts, and no duplicate cover when both teams play at home. Browser QA confirmed postponing the demo home game leaves only morning cover. The migration is still an initial schema for an unconfigured service, not an upgrade script for an already deployed database.
+
+## Simple guided forms
+
+The club home now shows three role-relevant actions. Registration, fixture, training and other multi-field forms use one question per screen, Back/Continue controls and a final editable summary. Rota coordinator tools sit under Manage rota; shift and fixture editors have focused screens. Demo explanations remain available in expandable sections.
+
+Browser QA checked required-field validation, registration completion, retained answers when going Back, summary editing, shift creation and invalid finish-time recovery without losing answers. The fixture editor displayed one question at a time. All 12 rota/database tests and JavaScript syntax checks passed. This does not enable live accounts or FA fixture synchronisation.

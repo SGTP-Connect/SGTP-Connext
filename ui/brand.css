@@ -10,6 +10,4 @@ header select{margin-right:0}
 header .brand img{object-fit:fill;clip-path:polygon(50% 0%,74% 6%,94% 15%,95% 35%,91% 57%,81% 77%,66% 93%,50% 100%,34% 93%,19% 77%,9% 57%,5% 35%,6% 15%,26% 6%);height:70px;width:70px}
 @media(max-width:600px){header .brand img{height:61px;width:61px}}
 
-/* Straight club-colour bands, with blue most prominent. */
-header:after{right:-24px;top:0;width:140px;height:100%;opacity:1;background:linear-gradient(112deg,transparent 0 18%,#2877b9 18% 42%,transparent 42% 47%,#ca3045 47% 63%,transparent 63% 68%,#f0c431 68% 79%,transparent 79% 84%,#111820 84% 91%,transparent 91%);pointer-events:none}
-@media(max-width:600px){header:after{width:106px;right:-20px}}
+header:after{display:none}

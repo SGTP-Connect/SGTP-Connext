@@ -9,3 +9,7 @@ header select{margin-right:0}
 
 header .brand img{object-fit:fill;clip-path:polygon(50% 0%,74% 6%,94% 15%,95% 35%,91% 57%,81% 77%,66% 93%,50% 100%,34% 93%,19% 77%,9% 57%,5% 35%,6% 15%,26% 6%);height:70px;width:70px}
 @media(max-width:600px){header .brand img{height:61px;width:61px}}
+
+/* Club rainbow: blue dominant, then red, yellow and black. */
+header:after{right:0;top:0;width:150px;height:100%;opacity:1;background:radial-gradient(ellipse at 125% 110%,transparent 0 30%,#111820 30.5% 35%,#f4c430 35.5% 42%,#d02d42 42.5% 52%,#2d7bc0 52.5% 68%,transparent 68.5%);pointer-events:none}
+@media(max-width:600px){header:after{right:0;width:106px;background:radial-gradient(ellipse at 135% 105%,transparent 0 30%,#111820 30.5% 35%,#f4c430 35.5% 42%,#d02d42 42.5% 52%,#2d7bc0 52.5% 68%,transparent 68.5%)}}

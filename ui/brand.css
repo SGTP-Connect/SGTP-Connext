@@ -13,3 +13,6 @@ header .brand img{object-fit:fill;clip-path:polygon(50% 0%,74% 6%,94% 15%,95% 35
 /* Club rainbow: blue dominant, then red, yellow and black. */
 header:after{right:0;top:0;width:150px;height:100%;opacity:1;background:radial-gradient(ellipse at 125% 110%,transparent 0 30%,#111820 30.5% 35%,#f4c430 35.5% 42%,#d02d42 42.5% 52%,#2d7bc0 52.5% 68%,transparent 68.5%);pointer-events:none}
 @media(max-width:600px){header:after{right:0;width:106px;background:radial-gradient(ellipse at 135% 105%,transparent 0 30%,#111820 30.5% 35%,#f4c430 35.5% 42%,#d02d42 42.5% 52%,#2d7bc0 52.5% 68%,transparent 68.5%)}}
+/* A broad sweep entering along the top and curving around the right corner. */
+header:after{width:620px;height:440px;top:-286px;right:-164px;background:radial-gradient(ellipse at center,transparent 0 58%,#111820 58.2% 59%,#e8bc32 59.2% 60.5%,#ca3045 60.7% 63%,#2877b9 63.2% 68%,transparent 68.2%);opacity:.95}
+@media(max-width:600px){header:after{width:440px;height:380px;top:-250px;right:-180px;background:radial-gradient(ellipse at center,transparent 0 58%,#111820 58.2% 59%,#e8bc32 59.2% 60.5%,#ca3045 60.7% 63%,#2877b9 63.2% 68%,transparent 68.2%)}}

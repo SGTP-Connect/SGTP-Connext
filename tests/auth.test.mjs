@@ -16,9 +16,9 @@ test('expired, incomplete and rejected links never create sessions',async()=>{
   await assert.rejects(api.restoreFromLink({hash,pathname:'/rota/',search:''},{replaceState(){cleared=true}}));assert.ok(cleared);assert.equal(api.session,null);
  }
 });
-test('email request targets current rota without queries or fragments',async()=>{
+test('email request targets the private rota manager without fragments',async()=>{
  globalThis.location={href:'https://preview.example/rota/?demo=0#ignored'};
- globalThis.fetch=async(url,opts)=>{assert.equal(new URL(url).searchParams.get('redirect_to'),'https://preview.example/rota/');assert.equal(JSON.parse(opts.body).email,'test@example.com');return {ok:true,json:async()=>({})}};
+ globalThis.fetch=async(url,opts)=>{assert.equal(new URL(url).searchParams.get('redirect_to'),'https://preview.example/rota/?admin=1');assert.equal(JSON.parse(opts.body).email,'test@example.com');return {ok:true,json:async()=>({})}};
  await new RotaAPI(config).sendCode('test@example.com');
 });
 

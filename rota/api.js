@@ -1,7 +1,7 @@
 export class RotaAPI {
  constructor(config){this.url=config.url.replace(/\/$/,'');this.key=config.publishableKey;this.session=null}
  async fetch(path,body,token){let res;try{res=await fetch(this.url+path,{method:'POST',headers:{apikey:this.key,'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)})}catch{throw Error('Could not reach the club rota. Check your connection and try again.')}const data=await res.json().catch(()=>null);if(!res.ok){if(res.status===401){this.session=null;throw Error('Your sign-in has expired. Please sign in again.')}throw Error(data?.msg||data?.message||data?.error_description||'That action could not be completed. Please try again.')}return data}
- async sendCode(email){const redirect=new URL('./',location.href);redirect.search='';redirect.hash='';await this.fetch('/auth/v1/otp?redirect_to='+encodeURIComponent(redirect.href),{email,create_user:true})}
+ async sendCode(email){const redirect=new URL('./',location.href);redirect.search='?admin=1';redirect.hash='';await this.fetch('/auth/v1/otp?redirect_to='+encodeURIComponent(redirect.href),{email,create_user:true})}
  async restoreFromLink(loc=location,hist=history){
   const params=new URLSearchParams(loc.hash.slice(1));
   if(!['access_token','refresh_token','error','error_description'].some(k=>params.has(k)))return false;

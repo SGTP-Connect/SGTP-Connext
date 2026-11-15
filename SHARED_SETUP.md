@@ -12,3 +12,9 @@ Prepared for preview; live migrations and access are not yet verified. Demo link
 8. Only after these checks, replace main demo links with shared routes and request production publishing approval.
 
 The database tests use an isolated Postgres-compatible test database, not the live project. Run npm test. Tests cover anonymous table denial, coordinator/finance role separation, idempotent requests, capacity across old/new booking paths, age/contact checks, cancellation, fee snapshots, cup fees, approval locks, stale-edit rejection and audit records.
+
+## Manager friendlies
+
+004_friendlies.sql is applied to the connected SGTP project. The public calendar reads friendly_list alongside the existing static FA snapshots. friendly_save only edits the separate friendlies table; it never modifies FA source rows, the payment ledger or pitch bookings. Managers require a confirmed Supabase account plus an explicit team_managers assignment. Club coordinators can manage all registered teams. Never infer authority from the main demo role selector.
+
+Before manager rollout, configure the exact preview authentication redirect /fixtures/manage.html alongside the outstanding committee redirects. Confirm email delivery and assign manager user IDs to their verified teams. No team-manager assignments have been guessed or created. Ben retains coordinator access. Friendlies do not yet activate home-match volunteer cover automatically; the coordinator must record the home fixture in the rota fixture manager.

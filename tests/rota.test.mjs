@@ -1,4 +1,5 @@
-import {test} from 'node:test';
+import {test, mock} from 'node:test';
+mock.timers.enable({apis:['Date'], now:new Date('2026-11-13T10:00:00Z')});
 import assert from 'node:assert/strict';
 import {seed,transition,DemoStore,validateShift,londonDay} from '../rota/model.js';
 test('requests require approval and duplicate clicks are idempotent',()=>{const s=seed();transition(s,'volunteer','request',{expenses:'claim',age_confirmed:true,shift_id:'s1'});transition(s,'volunteer','request',{expenses:'claim',age_confirmed:true,shift_id:'s1'});assert.equal(s.requests.filter(r=>r.user_id==='volunteer').length,1);assert.equal(s.requests.at(-1).status,'pending');transition(s,'coordinator','approve',{age_verified:true,shift_id:'s1',user_id:'volunteer'});assert.equal(s.requests.at(-1).status,'confirmed')});

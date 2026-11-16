@@ -1,0 +1,324 @@
+{
+  "season": "2026/27",
+  "checked": "2026-11-13",
+  "latestResult": "2026-11-11",
+  "source": "https://fulltime.thefa.com/displayTeam.html?id=399619897",
+  "status": "Published totals \u2014 match-by-match coverage not reconciled",
+  "players": [
+    {
+      "name": "Daniel Ayling",
+      "appearances": 10,
+      "starts": 7,
+      "benchUsed": 3,
+      "benchUnused": null
+    },
+    {
+      "name": "Spencer Bartlett",
+      "appearances": 6,
+      "starts": 2,
+      "benchUsed": 4,
+      "benchUnused": null
+    },
+    {
+      "name": "Sam Bishop",
+      "appearances": 10,
+      "starts": 10,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Billy Bright",
+      "appearances": 7,
+      "starts": 1,
+      "benchUsed": 6,
+      "benchUnused": 1
+    },
+    {
+      "name": "Colby Britton",
+      "appearances": 3,
+      "starts": 3,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Thomas Burt",
+      "appearances": 4,
+      "starts": 4,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Sanocy Camara",
+      "appearances": 3,
+      "starts": 3,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Frazer Clark",
+      "appearances": 13,
+      "starts": 13,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Bradley Crocombe",
+      "appearances": 11,
+      "starts": 11,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Jamie Thomas Down",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Ellis Drew",
+      "appearances": 9,
+      "starts": 6,
+      "benchUsed": 3,
+      "benchUnused": null
+    },
+    {
+      "name": "Ben Elphick",
+      "appearances": 1,
+      "starts": 1,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Luke Forward",
+      "appearances": 1,
+      "starts": 1,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Tariq Gasmi",
+      "appearances": 2,
+      "starts": 1,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Cole Francis Harford",
+      "appearances": 3,
+      "starts": 3,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Morgan Harford",
+      "appearances": 12,
+      "starts": 4,
+      "benchUsed": 8,
+      "benchUnused": null
+    },
+    {
+      "name": "Robert Heaps",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "William Hughes",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Harrison King",
+      "appearances": 13,
+      "starts": 11,
+      "benchUsed": 2,
+      "benchUnused": null
+    },
+    {
+      "name": "Toby Lee",
+      "appearances": 3,
+      "starts": null,
+      "benchUsed": 3,
+      "benchUnused": null
+    },
+    {
+      "name": "Lloyd Marshall",
+      "appearances": 11,
+      "starts": 11,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Marley Matthews",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Connor McAuley",
+      "appearances": 2,
+      "starts": 2,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Jack Mogg",
+      "appearances": 7,
+      "starts": 6,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Alireza Nabizadeh",
+      "appearances": 4,
+      "starts": 2,
+      "benchUsed": 2,
+      "benchUnused": null
+    },
+    {
+      "name": "Ryan O'Callaghan",
+      "appearances": 13,
+      "starts": 13,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "James Oguche",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Jacob Osborne",
+      "appearances": 5,
+      "starts": 1,
+      "benchUsed": 4,
+      "benchUnused": null
+    },
+    {
+      "name": "Elliott Osman",
+      "appearances": 12,
+      "starts": 11,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Lewis Perring",
+      "appearances": 1,
+      "starts": 1,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Matthew Pilkington",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Elliot Prangnell",
+      "appearances": 9,
+      "starts": 2,
+      "benchUsed": 7,
+      "benchUnused": null
+    },
+    {
+      "name": "Jayden Preece",
+      "appearances": 13,
+      "starts": 10,
+      "benchUsed": 3,
+      "benchUnused": null
+    },
+    {
+      "name": "Owen Raven",
+      "appearances": 9,
+      "starts": 8,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Lewie William Rendle",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Jerry Revell",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Kieran Roberts",
+      "appearances": 2,
+      "starts": null,
+      "benchUsed": 2,
+      "benchUnused": null
+    },
+    {
+      "name": "Samuel John Joseph Stayt",
+      "appearances": 1,
+      "starts": 1,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Charlie Paul Stevens",
+      "appearances": 1,
+      "starts": 1,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Caleb Talliss",
+      "appearances": 8,
+      "starts": 6,
+      "benchUsed": 2,
+      "benchUnused": null
+    },
+    {
+      "name": "Daniel Tate",
+      "appearances": 2,
+      "starts": null,
+      "benchUsed": 2,
+      "benchUnused": null
+    },
+    {
+      "name": "Blake Taylor",
+      "appearances": 1,
+      "starts": null,
+      "benchUsed": 1,
+      "benchUnused": null
+    },
+    {
+      "name": "Daniel Tottman",
+      "appearances": 4,
+      "starts": 2,
+      "benchUsed": 2,
+      "benchUnused": null
+    },
+    {
+      "name": "Oliver Tyson",
+      "appearances": 1,
+      "starts": 1,
+      "benchUsed": null,
+      "benchUnused": null
+    },
+    {
+      "name": "Saul Vanes",
+      "appearances": 6,
+      "starts": 6,
+      "benchUsed": null,
+      "benchUnused": null
+    }
+  ]
+}
